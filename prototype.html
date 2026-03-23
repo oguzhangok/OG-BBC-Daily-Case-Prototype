@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operator Analytics Dashboard — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a56db;
+    --primary-light: #e1effe;
+    --sidebar-bg: #111827;
+    --sidebar-text: #d1d5db;
+    --sidebar-active: #1a56db;
+    --bg: #f3f4f6;
+    --card-bg: #ffffff;
+    --text: #111827;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --orange: #d97706;
+    --orange-light: #fef3c7;
+    --purple: #7c3aed;
+    --purple-light: #ede9fe;
+    --teal: #0d9488;
+    --teal-light: #ccfbf1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+  }
+
+  .sidebar-brand {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-brand h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.2px;
+  }
+
+  .sidebar-brand span {
+    font-size: 11px;
+    color: var(--sidebar-text);
+    display: block;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-nav {
+    padding: 12px 8px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6b7280;
+    padding: 16px 12px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+    color: var(--sidebar-text);
+    user-select: none;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active { background: var(--sidebar-active); color: #fff; }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  /* Main content */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    min-height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .topbar h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .freshness-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--green-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .freshness-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+  }
+
+  /* Filters */
+  .filters-bar {
+    padding: 16px 28px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .filter-group label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  .filter-group select,
+  .filter-group input[type="date"] {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--card-bg);
+    cursor: pointer;
+  }
+
+  .filter-group select {
+    padding-right: 32px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+
+  .filter-group select:focus,
+  .filter-group input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+
+  .custom-date-fields {
+    display: none;
+    gap: 12px;
+    align-items: flex-end;
+  }
+  .custom-date-fields.visible {
+    display: flex;
+  }
+
+  /* Content */
+  .content {
+    padding: 0 28px 40px;
+  }
+
+  .section {
+    display: none;
+  }
+  .section.active {
+    display: block;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-top: 4px;
+  }
+
+  .section-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .section-header .section-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* KPI Cards grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+    transition: box-shadow 0.15s;
+  }
+
+  .kpi-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 6px 0 4px;
+    letter-spacing: -0.5px;
+  }
+
+  .kpi-change {
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .kpi-change.up { color: var(--green); background: var(--green-light); }
+  .kpi-change.down { color: var(--red); background: var(--red-light); }
+
+  /* Sparkline container inside KPI cards */
+  .kpi-sparkline {
+    height: 36px;
+    margin-top: 8px;
+  }
+
+  /* Progress ring */
+  .progress-ring-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: box-shadow 0.15s;
+  }
+  .progress-ring-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .progress-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
+    position: relative;
+  }
+
+  .progress-ring-inner {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  /* Progress bar (horizontal) */
+  .progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* Comparison card */
+  .comparison-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: box-shadow 0.15s;
+  }
+  .comparison-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .comparison-card .comp-header {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .comparison-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .comp-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .comp-item .comp-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .comp-item .comp-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .comp-bar-track {
+    width: 100%;
+    height: 10px;
+    background: var(--bg);
+    border-radius: 5px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .comp-bar-left {
+    height: 100%;
+    border-radius: 5px 0 0 5px;
+    transition: width 0.4s ease;
+  }
+
+  .comp-bar-right {
+    height: 100%;
+    border-radius: 0 5px 5px 0;
+    transition: width 0.4s ease;
+  }
+
+  /* Hero card (Impact CO2) */
+  .hero-card {
+    background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 20px 22px;
+    color: #fff;
+    position: relative;
+    overflow: visible;
+    transition: box-shadow 0.15s;
+  }
+  .hero-card:hover {
+    box-shadow: 0 4px 16px rgba(5,150,105,0.25);
+  }
+
+  .hero-card .hero-icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .hero-card .kpi-label {
+    color: rgba(255,255,255,0.8);
+  }
+
+  .hero-card .kpi-value {
+    color: #fff;
+    font-size: 30px;
+  }
+
+  .hero-card .kpi-change {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+
+  .hero-card .kpi-sparkline {
+    height: 36px;
+    margin-top: 8px;
+  }
+
+  /* Mini table */
+  .mini-table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    grid-column: span 2;
+    transition: box-shadow 0.15s;
+  }
+  .mini-table-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .mini-table-card .table-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mini-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mini-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mini-table td {
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--bg);
+  }
+
+  .mini-table td:last-child {
+    text-align: right;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  /* Per-site coverage bars */
+  .coverage-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    grid-column: span 2;
+    align-self: start;
+    transition: box-shadow 0.15s;
+  }
+  .coverage-card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .coverage-card .cov-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cov-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .cov-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .cov-site-label {
+    width: 70px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .cov-bar-track {
+    flex: 1;
+    height: 20px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cov-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    transition: width 0.4s ease;
+  }
+
+  /* Info icon + Tooltip */
+  .info-icon {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--text-secondary);
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    position: relative;
+    flex-shrink: 0;
+    font-style: normal;
+  }
+
+  .info-icon .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--sidebar-bg);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    width: 240px;
+    z-index: 20;
+    text-transform: none;
+    letter-spacing: 0;
+    pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+
+  .info-icon .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--sidebar-bg);
+  }
+
+  .info-icon:hover .tooltip { display: block; }
+
+  /* Chart container */
+  .chart-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .chart-container h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+
+  /* Funnel */
+  .funnel-bars {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 0;
+  }
+
+  .funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .funnel-label {
+    width: 140px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .funnel-shape {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    transition: width 0.5s ease;
+  }
+
+  /* Responsive */
+  .sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px;
+    color: #6b7280;
+    line-height: 1.6;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .export-wrapper {
+    position: relative;
+  }
+
+  .export-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .export-btn:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .export-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    min-width: 220px;
+    z-index: 20;
+    overflow: hidden;
+  }
+
+  .export-menu.show {
+    display: block;
+  }
+
+  .export-option {
+    padding: 10px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .export-option:hover {
+    background: var(--bg);
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .mini-table-card, .coverage-card { grid-column: span 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h2>Operator Demo</h2>
+    <span>Analytics Dashboard</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-label">Analytics</div>
+    <div class="nav-item active" data-section="adoption">
+      <span class="nav-icon">👥</span> Adoption
+    </div>
+    <div class="nav-item" data-section="activity">
+      <span class="nav-icon">🚗</span> Ride Activity
+    </div>
+    <div class="nav-item" data-section="funnel">
+      <span class="nav-icon">🔄</span> Matching / Funnel
+    </div>
+    <div class="nav-item" data-section="subsidy">
+      <span class="nav-icon">💰</span> Subsidy / Budget
+    </div>
+    <div class="nav-item" data-section="impact">
+      <span class="nav-icon">🌱</span> Impact
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div>Ticket #173 Draft</div>
+    <div>v0.1</div>
+    <div>Crafted by Oguzhan Gok</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+  <!-- Top bar -->
+  <div class="topbar">
+    <h1>Analytics Dashboard</h1>
+    <div class="topbar-right">
+      <div class="export-wrapper">
+        <button class="export-btn" onclick="toggleExportMenu()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+          Export Data
+        </button>
+        <div class="export-menu" id="exportMenu">
+          <div class="export-option" onclick="downloadCSV('filtered')">Export current filtered data</div>
+          <div class="export-option" onclick="downloadCSV('full')">Export full data</div>
+        </div>
+      </div>
+      <div class="freshness-badge">
+        <span class="freshness-dot"></span>
+        Data updated: 2 hours ago
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label>Date Range</label>
+      <select id="filter-date">
+        <option value="7d">Last 7 days</option>
+        <option value="30d" selected>Last 30 days</option>
+        <option value="90d">Last 90 days</option>
+        <option value="12m">Last 12 months</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+    <div class="custom-date-fields" id="custom-date-fields">
+      <div class="filter-group">
+        <label>Start</label>
+        <input type="date" id="filter-date-start">
+      </div>
+      <div class="filter-group">
+        <label>End</label>
+        <input type="date" id="filter-date-end">
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Site / Geography</label>
+      <select id="filter-site">
+        <option value="all" selected>All Sites</option>
+        <option value="paris">Paris HQ</option>
+        <option value="lyon">Lyon Office</option>
+        <option value="marseille">Marseille Campus</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Content sections -->
+  <div class="content">
+
+    <!-- ADOPTION -->
+    <div class="section active" id="section-adoption">
+      <div class="section-header">
+        <h2>Adoption</h2>
+        <span class="section-desc">Are people joining the program?</span>
+      </div>
+      <div class="kpi-grid" id="kpi-adoption"></div>
+      <div class="chart-container">
+        <h3>New Registrations Over Time <span class="info-icon">ℹ<span class="tooltip">Number of new user registrations per period — shows growth trend over the selected date range.</span></span></h3>
+        <div class="chart-wrap"><canvas id="chart-adoption"></canvas></div>
+      </div>
+    </div>
+
+    <!-- RIDE ACTIVITY -->
+    <div class="section" id="section-activity">
+      <div class="section-header">
+        <h2>Ride Activity</h2>
+        <span class="section-desc">Are they actually carpooling?</span>
+      </div>
+      <div class="kpi-grid" id="kpi-activity"></div>
+      <div class="chart-container">
+        <h3>Completed Rides Over Time <span class="info-icon">ℹ<span class="tooltip">Number of completed rides per period — shows ridership trend over the selected date range.</span></span></h3>
+        <div class="chart-wrap"><canvas id="chart-activity"></canvas></div>
+      </div>
+    </div>
+
+    <!-- MATCHING / FUNNEL -->
+    <div class="section" id="section-funnel">
+      <div class="section-header">
+        <h2>Matching / Funnel</h2>
+        <span class="section-desc">Is the product converting demand into rides?</span>
+      </div>
+      <div class="kpi-grid" id="kpi-funnel"></div>
+      <div class="chart-container">
+        <h3>Conversion Funnel <span class="info-icon">ℹ<span class="tooltip">Ride matching conversion from initial searches through to completed rides — shows where demand drops off.</span></span></h3>
+        <div id="funnel-visual"></div>
+      </div>
+    </div>
+
+    <!-- SUBSIDY / BUDGET -->
+    <div class="section" id="section-subsidy">
+      <div class="section-header">
+        <h2>Subsidy / Budget</h2>
+        <span class="section-desc">Are incentives working efficiently?</span>
+      </div>
+      <div class="kpi-grid" id="kpi-subsidy"></div>
+      <div class="chart-container">
+        <h3>Budget Utilization <span class="info-icon">ℹ<span class="tooltip">Proportion of the allocated subsidy budget spent in the selected period — helps track burn rate against plan.</span></span></h3>
+        <div class="chart-wrap"><canvas id="chart-subsidy"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <h3>Subsidy Spend Over Time <span class="info-icon">ℹ<span class="tooltip">Total subsidy disbursements per period — shows spending trend and seasonality over the selected date range.</span></span></h3>
+        <div class="chart-wrap"><canvas id="chart-subsidy-trend"></canvas></div>
+      </div>
+    </div>
+
+    <!-- IMPACT -->
+    <div class="section" id="section-impact">
+      <div class="section-header">
+        <h2>Impact</h2>
+        <span class="section-desc">Is the program creating tangible value?</span>
+      </div>
+      <div class="kpi-grid" id="kpi-impact"></div>
+      <div class="chart-container">
+        <h3>Estimated CO₂ Savings by Month <span class="info-icon">ℹ<span class="tooltip">Monthly CO₂ emissions avoided by shared rides compared to solo driving — tracks environmental impact over time.</span></span></h3>
+        <div class="chart-wrap"><canvas id="chart-impact"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── Multiplier Configuration ───────────────────────────────────
+const DATE_MULT = { '7d': 0.25, '30d': 1.0, '90d': 2.6, '12m': 8.5, 'custom': 0.7 };
+const SITE_MULT = { 'all': 1.0, 'paris': 0.55, 'lyon': 0.30, 'marseille': 0.15 };
+const DATE_LABELS = {
+  '7d':     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  '30d':    ['Oct-25', 'Nov-25', 'Dec-25', 'Jan-26', 'Feb-26', 'Mar-26'],
+  '90d':    ['Q1', 'Q2', 'Q3', 'Q4', 'Q1', 'Q2'],
+  '12m':    ['Apr-25', 'Jun-25', 'Aug-25', 'Oct-25', 'Dec-25', 'Feb-26'],
+  'custom': ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'],
+};
+const SITE_BUDGETS = { 'all': 30000, 'paris': 16500, 'lyon': 9000, 'marseille': 4500 };
+const DATE_BUDGET_FRAC = { '7d': 7/365, '30d': 30/365, '90d': 90/365, '12m': 1, 'custom': 45/365 };
+const SITE_NAMES = { 'paris': 'Paris HQ', 'lyon': 'Lyon Office', 'marseille': 'Marseille Campus' };
+
+// ─── Base Data (30d + All Sites) ────────────────────────────────
+const BASE_DATA = {
+  adoption: {
+    kpis: [
+      { label: 'Registered Users', value: 224, change: 12, changeUnit: '%', up: true, tip: 'Total number of users who have created an account within this operator perimeter.', sparkline: [170, 182, 194, 205, 214, 224] },
+      { label: 'New Registrations (period)', value: 34, change: 8, changeUnit: '%', up: true, tip: 'Users who registered in the selected period.', sparkline: [21, 28, 31, 29, 32, 34] },
+      { label: 'Activated Users', value: 152, change: 15, changeUnit: '%', up: true, tip: 'Users who completed at least one ride after registering.', sparkline: [118, 126, 133, 140, 146, 152] },
+      { label: 'Monthly Active Users', value: 72, change: 5, changeUnit: '%', up: true, tip: 'Unique users who used the service at least once in the last 30 days.', sparkline: [54, 58, 62, 65, 68, 72] },
+      { label: 'Activation Rate', value: 68.0, change: 2, changeUnit: 'pp', up: true, tip: 'Percentage of registered users who completed at least one ride.', isPct: true, ring: true },
+    ],
+    chart: { data: [21, 28, 31, 29, 32, 34] },
+  },
+  activity: {
+    kpis: [
+      { label: 'Completed Rides', value: 168, change: 18, changeUnit: '%', up: true, tip: 'Total rides that were matched, accepted, and completed.', sparkline: [104, 116, 128, 142, 154, 168] },
+      { label: 'Avg Rides / User', value: 3.2, change: 0.3, changeUnit: '', up: true, tip: 'Average number of completed rides per active user.', isAvg: true },
+      { label: 'Cancellation Rate', value: 6.2, change: 1.1, changeUnit: 'pp', up: true, tip: 'Percentage of accepted rides that were cancelled before completion.', isPct: true, progressBar: true, barColor: 'var(--red)' },
+    ],
+    requests: 86,
+    offers: 62,
+    riders: 25,
+    drivers: 16,
+    chart: { data: [22, 27, 24, 28, 31, 36] },
+  },
+  funnel: {
+    kpis: [
+      { label: 'Search-to-Match Rate', value: 72.4, change: 3, changeUnit: 'pp', up: true, tip: 'Percentage of ride searches that resulted in at least one match proposal.', isPct: true, ring: true, ringColor: 'var(--primary)' },
+      { label: 'Ride Completion Rate', value: 84.6, change: 2, changeUnit: 'pp', up: true, tip: 'Percentage of matched rides that were completed (not cancelled).', isPct: true, ring: true, ringColor: 'var(--green)' },
+      { label: 'Unmatched Demand Rate', value: 27.6, change: 3, changeUnit: 'pp', up: true, tip: 'Percentage of ride searches with no match found — indicates supply gaps.', isPct: true, ring: true, ringColor: 'var(--red)' },
+    ],
+    funnel: [
+      { label: 'Searches', value: 311, color: 'var(--primary)' },
+      { label: 'Matches Found', value: 225, color: 'var(--purple)' },
+      { label: 'Rides Accepted', value: 199, color: 'var(--orange)' },
+      { label: 'Rides Completed', value: 168, color: 'var(--green)' },
+    ],
+  },
+  subsidy: {
+    spent: 1564,
+    avgPerRide: 2.40,
+    costPerRide: 9.31,
+    trend: { data: [180, 210, 240, 260, 300, 374] },
+  },
+  impact: {
+    co2: 0.5,
+    co2Sparkline: [0.06, 0.07, 0.08, 0.08, 0.09, 0.12],
+    corridors: [
+      { from: 'Paris - La Défense', to: 'Paris - 11e Bastille', rides: 48 },
+      { from: 'Paris - Gare du Nord', to: 'Paris - Montparnasse', rides: 32 },
+      { from: 'Lyon - Part-Dieu', to: 'Lyon - Confluence', rides: 28 },
+      { from: 'Marseille - Vieux-Port', to: 'Marseille - Euroméditerranée', rides: 18 },
+      { from: 'Lyon - Vaise', to: 'Lyon - Villeurbanne', rides: 12 },
+    ],
+    coverage: [
+      { site: 'Paris', pct: 68, users: 1600 },
+      { site: 'Lyon', pct: 55, users: 960 },
+      { site: 'Marseille', pct: 45, users: 640 },
+    ],
+    chart: { data: [0.06, 0.07, 0.08, 0.08, 0.09, 0.12] },
+  },
+};
+
+// ─── Helpers ────────────────────────────────────────────────────
+function comboHash(dateFilter, siteFilter) {
+  return (dateFilter + siteFilter).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+}
+
+function jitter(baseValue, hash, range) {
+  // Deterministic small jitter: ±range based on hash
+  const seed = ((hash * 9301 + 49297) % 233280) / 233280; // 0..1
+  return baseValue + (seed * 2 - 1) * range;
+}
+
+function clamp(val, min, max) { return Math.min(max, Math.max(min, val)); }
+
+function fmtInt(n) { return Math.round(n).toLocaleString('en-US'); }
+function fmtDec(n, decimals) { return n.toFixed(decimals); }
+
+// ─── Generate Data ──────────────────────────────────────────────
+function generateData(dateFilter, siteFilter) {
+  const mult = DATE_MULT[dateFilter] * SITE_MULT[siteFilter];
+  const h = comboHash(dateFilter, siteFilter);
+  const labels = DATE_LABELS[dateFilter];
+
+  function scaleArray(arr) { return arr.map(v => v * mult); }
+  function jitterPct(base) { return clamp(jitter(base, h, 3), 0, 100); }
+  function jitterChange(base) { return jitter(base, h, 1.5); }
+
+  // --- Adoption ---
+  const adoptionKpis = BASE_DATA.adoption.kpis.map(k => {
+    if (k.isPct) {
+      const pctVal = +jitterPct(k.value).toFixed(1);
+      const chg = +jitterChange(k.change).toFixed(0);
+      const up = chg >= 0;
+      return { ...k, value: pctVal + '%', pctValue: pctVal, change: (up ? '+' : '') + chg + k.changeUnit, up };
+    }
+    const scaled = Math.round(k.value * mult);
+    const chg = +jitterChange(k.change).toFixed(0);
+    const up = chg >= 0;
+    return {
+      ...k,
+      value: fmtInt(scaled),
+      change: (up ? '+' : '') + chg + k.changeUnit,
+      up,
+      sparkline: k.sparkline ? scaleArray(k.sparkline) : undefined,
+    };
+  });
+
+  // --- Activity ---
+  const activityKpis = BASE_DATA.activity.kpis.map(k => {
+    if (k.isPct) {
+      const pctVal = +jitterPct(k.value).toFixed(1);
+      const chg = +jitterChange(k.change).toFixed(1);
+      const up = chg >= 0;
+      return { ...k, value: pctVal + '%', pctValue: pctVal, change: (up ? '-' : '+') + Math.abs(chg).toFixed(1) + k.changeUnit, up: chg <= 0, progressBar: true, barColor: k.barColor };
+    }
+    if (k.isAvg) {
+      const avgVal = +jitterPct(k.value).toFixed(1); // small jitter around base
+      const chg = +jitterChange(k.change).toFixed(1);
+      const up = chg >= 0;
+      return { ...k, value: avgVal.toFixed(1), change: (up ? '+' : '') + chg.toFixed(1), up };
+    }
+    const scaled = Math.round(k.value * mult);
+    const chg = +jitterChange(k.change).toFixed(0);
+    const up = chg >= 0;
+    return {
+      ...k,
+      value: fmtInt(scaled),
+      change: (up ? '+' : '') + chg + k.changeUnit,
+      up,
+      sparkline: k.sparkline ? scaleArray(k.sparkline) : undefined,
+    };
+  });
+
+  // --- Funnel ---
+  const funnelKpis = BASE_DATA.funnel.kpis.map(k => {
+    const pctVal = +jitterPct(k.value).toFixed(1);
+    const chg = +jitterChange(k.change).toFixed(0);
+    const isUnmatched = k.label.includes('Unmatched');
+    const up = isUnmatched ? chg <= 0 : chg >= 0;
+    return { ...k, value: pctVal + '%', pctValue: pctVal, change: (chg >= 0 ? '+' : '') + chg + k.changeUnit, up };
+  });
+
+  // Recalculate funnel absolute values
+  const searchesScaled = Math.round(BASE_DATA.funnel.funnel[0].value * mult);
+  const matchRate = funnelKpis[0].pctValue / 100;
+  const completionRate = funnelKpis[1].pctValue / 100;
+  const matchesFound = Math.round(searchesScaled * matchRate);
+  const acceptedRatio = 199 / 225; // keep base ratio for accepted/matched
+  const ridesAccepted = Math.round(matchesFound * acceptedRatio);
+  const ridesCompleted = Math.round(ridesAccepted * completionRate);
+  const funnelSteps = [
+    { label: 'Searches', value: searchesScaled, pct: 100, color: 'var(--primary)' },
+    { label: 'Matches Found', value: matchesFound, pct: +(matchesFound / searchesScaled * 100).toFixed(1), color: 'var(--purple)' },
+    { label: 'Rides Accepted', value: ridesAccepted, pct: +(ridesAccepted / searchesScaled * 100).toFixed(1), color: 'var(--orange)' },
+    { label: 'Rides Completed', value: ridesCompleted, pct: +(ridesCompleted / searchesScaled * 100).toFixed(1), color: 'var(--green)' },
+  ];
+
+  // --- Subsidy ---
+  const budget = Math.round(SITE_BUDGETS[siteFilter] * DATE_BUDGET_FRAC[dateFilter]);
+  const spentScaled = Math.round(BASE_DATA.subsidy.spent * mult);
+  const spent = Math.min(spentScaled, budget); // can't exceed budget
+  const utilPct = +(spent / budget * 100).toFixed(1);
+  const avgPerRide = +jitter(BASE_DATA.subsidy.avgPerRide, h, 0.20).toFixed(2);
+  const costPerRide = +jitter(BASE_DATA.subsidy.costPerRide, h, 0.50).toFixed(2);
+  const spentChg = +jitterChange(22).toFixed(0);
+  const avgChg = +jitter(-0.10, h, 0.08).toFixed(2);
+  const costChg = +jitter(-0.45, h, 0.20).toFixed(2);
+
+  const subsidyKpis = [
+    { label: 'Total Budget', value: '€' + fmtInt(budget), change: '', up: true, tip: 'Total subsidy budget allocated for this operator in the current period.' },
+    { label: 'Subsidy Spent', value: '€' + fmtInt(spent), change: (spentChg >= 0 ? '+' : '') + spentChg + '%', up: spentChg < 0, tip: 'Total subsidy amount disbursed to date.', progressBar: true, pctValue: utilPct, barColor: 'var(--primary)', barLabel: '€' + fmtInt(spent) + ' of €' + fmtInt(budget) },
+    { label: 'Avg Subsidy / Ride', value: '€' + avgPerRide.toFixed(2), change: (avgChg >= 0 ? '+' : '') + '€' + Math.abs(avgChg).toFixed(2), up: avgChg <= 0, tip: 'Average subsidy amount per completed subsidized ride.' },
+    { label: 'Cost / Completed Ride', value: '€' + costPerRide.toFixed(2), change: (costChg >= 0 ? '+' : '-') + '€' + Math.abs(costChg).toFixed(2), up: costChg <= 0, tip: 'Total cost (subsidy + platform) divided by completed rides.' },
+  ];
+
+  // --- Impact ---
+  const co2Scaled = +(BASE_DATA.impact.co2 * mult).toFixed(1);
+  const co2Chg = +jitterChange(21).toFixed(0);
+
+  // Filter corridors by site
+  let corridors = BASE_DATA.impact.corridors.map(c => ({ ...c, rides: Math.round(c.rides * mult) }));
+  let coverage = BASE_DATA.impact.coverage.map(c => ({ ...c, pct: Math.round(jitter(c.pct, h, 3)) }));
+
+  if (siteFilter !== 'all') {
+    const cityPrefix = { 'paris': 'Paris', 'lyon': 'Lyon', 'marseille': 'Marseille' }[siteFilter];
+    corridors = corridors.filter(c => c.from.startsWith(cityPrefix) || c.to.startsWith(cityPrefix));
+    coverage = coverage.filter(c => c.site.startsWith(cityPrefix));
+  }
+
+  return {
+    adoption: {
+      kpis: adoptionKpis,
+      chart: { labels, data: scaleArray(BASE_DATA.adoption.chart.data) },
+    },
+    activity: {
+      kpis: activityKpis,
+      requests: Math.round(BASE_DATA.activity.requests * mult),
+      offers: Math.round(BASE_DATA.activity.offers * mult),
+      riders: Math.round(BASE_DATA.activity.riders * mult),
+      drivers: Math.round(BASE_DATA.activity.drivers * mult),
+      chart: { labels, data: scaleArray(BASE_DATA.activity.chart.data) },
+    },
+    funnel: {
+      kpis: funnelKpis,
+      funnel: funnelSteps,
+    },
+    subsidy: {
+      kpis: subsidyKpis,
+      chart: { spent, remaining: budget - spent },
+      trend: { labels, data: scaleArray(BASE_DATA.subsidy.trend.data) },
+    },
+    impact: {
+      co2: { value: co2Scaled + ' t', change: (co2Chg >= 0 ? '+' : '') + co2Chg + '%', up: co2Chg >= 0, tip: 'Estimated metric tons of CO₂ avoided based on completed shared rides vs. solo driving.', sparkline: scaleArray(BASE_DATA.impact.co2Sparkline) },
+      corridors,
+      coverage,
+      chart: { labels, data: scaleArray(BASE_DATA.impact.chart.data) },
+    },
+  };
+}
+
+// ─── Chart instances ────────────────────────────────────────────
+let charts = {};
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if (c && c.destroy) c.destroy(); });
+  charts = {};
+}
+
+// ─── Render standard KPI card HTML ──────────────────────────────
+function kpiCardHTML(k, idx, sectionId) {
+  let sparkId = k.sparkline ? `sparkline-${sectionId}-${idx}` : '';
+  let barHTML = '';
+  if (k.progressBar) {
+    barHTML = `
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:${k.pctValue}%;background:${k.barColor}"></div>
+      </div>
+      ${k.barLabel ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${k.barLabel}</div>` : ''}
+    `;
+  }
+  return `
+    <div class="kpi-card">
+      <div class="kpi-label">
+        ${k.label}
+        <span class="info-icon">ℹ<span class="tooltip">${k.tip}</span></span>
+      </div>
+      <div class="kpi-value">${k.value}</div>
+      ${k.change ? `<span class="kpi-change ${k.up ? 'up' : 'down'}">${k.up ? '↑' : '↓'} ${k.change}</span>` : ''}
+      ${barHTML}
+      ${k.sparkline ? `<div class="kpi-sparkline"><canvas id="${sparkId}"></canvas></div>` : ''}
+    </div>
+  `;
+}
+
+// ─── Render progress ring card ──────────────────────────────────
+function progressRingHTML(k) {
+  const pct = k.pctValue || 0;
+  const color = k.ringColor || 'var(--primary)';
+  const bgColor = k.ringColor === 'var(--red)' ? 'var(--red-light)' : (k.ringColor === 'var(--green)' ? 'var(--green-light)' : 'var(--primary-light)');
+  return `
+    <div class="progress-ring-card">
+      <div class="kpi-label">
+        ${k.label}
+        <span class="info-icon">ℹ<span class="tooltip">${k.tip}</span></span>
+      </div>
+      <div class="progress-ring" style="background: conic-gradient(${color} ${pct * 3.6}deg, ${bgColor} ${pct * 3.6}deg);">
+        <div class="progress-ring-inner">${k.value}</div>
+      </div>
+      ${k.change ? `<span class="kpi-change ${k.up ? 'up' : 'down'}">${k.up ? '↑' : '↓'} ${k.change}</span>` : ''}
+    </div>
+  `;
+}
+
+// ─── Comparison card HTML ───────────────────────────────────────
+function comparisonCardHTML(title, leftLabel, leftValue, rightLabel, rightValue, leftColor, rightColor, tip) {
+  const leftNum = parseInt(leftValue.replace(/,/g, ''));
+  const rightNum = parseInt(rightValue.replace(/,/g, ''));
+  const total = leftNum + rightNum;
+  const leftPct = ((leftNum / total) * 100).toFixed(1);
+  const rightPct = ((rightNum / total) * 100).toFixed(1);
+  return `
+    <div class="comparison-card">
+      <div class="comp-header">
+        ${title}
+        <span class="info-icon">ℹ<span class="tooltip">${tip}</span></span>
+      </div>
+      <div class="comparison-row">
+        <div class="comp-item">
+          <div class="comp-value" style="color:${leftColor}">${leftValue}</div>
+          <div class="comp-label">${leftLabel}</div>
+        </div>
+        <div class="comp-item">
+          <div class="comp-value" style="color:${rightColor}">${rightValue}</div>
+          <div class="comp-label">${rightLabel}</div>
+        </div>
+      </div>
+      <div class="comp-bar-track">
+        <div class="comp-bar-left" style="width:${leftPct}%;background:${leftColor}"></div>
+        <div class="comp-bar-right" style="width:${rightPct}%;background:${rightColor}"></div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Mini table HTML ────────────────────────────────────────────
+function corridorsTableHTML(corridors, tip) {
+  const rows = corridors.map(c => `
+    <tr>
+      <td>${c.from} → ${c.to}</td>
+      <td>${c.rides.toLocaleString()}</td>
+    </tr>
+  `).join('');
+  return `
+    <div class="mini-table-card">
+      <div class="table-title">
+        Top Corridors
+        <span class="info-icon">ℹ<span class="tooltip">${tip}</span></span>
+      </div>
+      <table class="mini-table">
+        <thead><tr><th>Route</th><th style="text-align:right">Rides</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ─── Coverage bars HTML ─────────────────────────────────────────
+function coverageBarsHTML(sites, tip) {
+  const rows = sites.map(s => `
+    <div class="cov-row">
+      <span class="cov-site-label">${s.site}</span>
+      <div class="cov-bar-track">
+        <div class="cov-bar-fill" style="width:${s.pct}%;background:var(--teal)">${s.pct}% (${s.users.toLocaleString()} users)</div>
+      </div>
+    </div>
+  `).join('');
+  return `
+    <div class="coverage-card">
+      <div class="cov-title">
+        Coverage by Site
+        <span class="info-icon">ℹ<span class="tooltip">${tip}</span></span>
+      </div>
+      ${rows}
+    </div>
+  `;
+}
+
+// ─── Hero card HTML (CO2) ───────────────────────────────────────
+function heroCardHTML(data) {
+  return `
+    <div class="hero-card">
+      <div class="hero-icon">🌿</div>
+      <div class="kpi-label">
+        Estimated CO₂ Savings
+        <span class="info-icon">ℹ<span class="tooltip">${data.tip}</span></span>
+      </div>
+      <div class="kpi-value">${data.value}</div>
+      ${data.change ? `<span class="kpi-change ${data.up ? 'up' : 'down'}">${data.up ? '↑' : '↓'} ${data.change}</span>` : ''}
+      <div class="kpi-sparkline"><canvas id="sparkline-impact-co2"></canvas></div>
+    </div>
+  `;
+}
+
+// ─── Sparkline renderer ─────────────────────────────────────────
+function renderSparkline(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map((_, i) => i),
+      datasets: [{
+        data,
+        borderColor: color,
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHitRadius: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { display: false },
+        y: { display: false },
+      },
+    },
+  });
+}
+
+// ─── Render Funnel ──────────────────────────────────────────────
+function renderFunnel(containerId, steps) {
+  const el = document.getElementById(containerId);
+  const maxW = 420;
+  el.innerHTML = '<div class="funnel-bars">' + steps.map((s, i) => {
+    const thisW = (s.pct / 100) * maxW;
+    const nextW = (i < steps.length - 1) ? (steps[i + 1].pct / 100) * maxW : thisW * 0.7;
+    const inset = (thisW - nextW) / 2;
+    return `
+      <div class="funnel-row">
+        <span class="funnel-label">${s.label}</span>
+        <div class="funnel-shape" style="
+          width: ${thisW}px;
+          background: ${s.color};
+          clip-path: polygon(0 0, 100% 0, ${100 - (inset / thisW * 100)}% 100%, ${(inset / thisW * 100)}% 100%);
+        ">${s.value.toLocaleString()} (${s.pct}%)</div>
+      </div>`;
+  }).join('') + '</div>';
+}
+
+// ─── Chart factory helpers ──────────────────────────────────────
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+};
+
+function lineChart(canvasId, labels, data, color) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: color,
+        backgroundColor: color + '22',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: color,
+      }],
+    },
+    options: { ...chartDefaults, scales: { y: { beginAtZero: true } } },
+  });
+}
+
+function barChart(canvasId, labels, data, color) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: color + 'cc',
+        borderRadius: 6,
+      }],
+    },
+    options: { ...chartDefaults, scales: { y: { beginAtZero: true } } },
+  });
+}
+
+function doughnutChart(canvasId, spent, remaining) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Spent', 'Remaining'],
+      datasets: [{
+        data: [spent, remaining],
+        backgroundColor: ['#1a56db', '#e5e7eb'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+      },
+    },
+  });
+}
+
+// ─── Full render ────────────────────────────────────────────────
+function render() {
+  destroyCharts();
+  const dateFilter = document.getElementById('filter-date').value;
+  const siteFilter = document.getElementById('filter-site').value;
+  const d = generateData(dateFilter, siteFilter);
+
+  // === ADOPTION ===
+  const adoptionEl = document.getElementById('kpi-adoption');
+  let adoptionHTML = '';
+  d.adoption.kpis.forEach((k, i) => {
+    if (k.ring) {
+      adoptionHTML += progressRingHTML(k);
+    } else {
+      adoptionHTML += kpiCardHTML(k, i, 'adoption');
+    }
+  });
+  adoptionEl.innerHTML = adoptionHTML;
+  // Render sparklines for adoption
+  d.adoption.kpis.forEach((k, i) => {
+    if (k.sparkline) {
+      charts['spark-adoption-' + i] = renderSparkline(`sparkline-adoption-${i}`, k.sparkline, '#1a56db');
+    }
+  });
+  charts.adoption = lineChart('chart-adoption', d.adoption.chart.labels, d.adoption.chart.data, '#1a56db');
+
+  // === RIDE ACTIVITY ===
+  const activityEl = document.getElementById('kpi-activity');
+  let activityHTML = '';
+  d.activity.kpis.forEach((k, i) => {
+    activityHTML += kpiCardHTML(k, i, 'activity');
+  });
+  // Add comparison cards
+  activityHTML += comparisonCardHTML(
+    'Requests vs Offers', 'Requests', d.activity.requests.toLocaleString(), 'Offers', d.activity.offers.toLocaleString(),
+    'var(--primary)', 'var(--orange)',
+    'Supply/demand balance: ride requests posted by passengers vs. offers posted by drivers.'
+  );
+  activityHTML += comparisonCardHTML(
+    'Riders vs Drivers', 'Unique Riders', d.activity.riders.toLocaleString(), 'Unique Drivers', d.activity.drivers.toLocaleString(),
+    'var(--purple)', 'var(--teal)',
+    'Distinct passengers vs. distinct drivers who completed at least one ride in the period.'
+  );
+  activityEl.innerHTML = activityHTML;
+  // Render sparklines for activity
+  d.activity.kpis.forEach((k, i) => {
+    if (k.sparkline) {
+      charts['spark-activity-' + i] = renderSparkline(`sparkline-activity-${i}`, k.sparkline, '#059669');
+    }
+  });
+  charts.activity = barChart('chart-activity', d.activity.chart.labels, d.activity.chart.data, '#059669');
+
+  // === FUNNEL ===
+  const funnelEl = document.getElementById('kpi-funnel');
+  let funnelHTML = '';
+  d.funnel.kpis.forEach(k => {
+    funnelHTML += progressRingHTML(k);
+  });
+  funnelEl.innerHTML = funnelHTML;
+  renderFunnel('funnel-visual', d.funnel.funnel);
+
+  // === SUBSIDY ===
+  const subsidyEl = document.getElementById('kpi-subsidy');
+  let subsidyHTML = '';
+  d.subsidy.kpis.forEach((k, i) => {
+    subsidyHTML += kpiCardHTML(k, i, 'subsidy');
+  });
+  subsidyEl.innerHTML = subsidyHTML;
+  charts.subsidy = doughnutChart('chart-subsidy', d.subsidy.chart.spent, d.subsidy.chart.remaining);
+  charts.subsidyTrend = lineChart('chart-subsidy-trend', d.subsidy.trend.labels, d.subsidy.trend.data, '#1a56db');
+
+  // === IMPACT ===
+  const impactEl = document.getElementById('kpi-impact');
+  let impactHTML = '';
+  impactHTML += heroCardHTML(d.impact.co2);
+  impactHTML += corridorsTableHTML(d.impact.corridors, 'Top origin-destination corridors with significant ride activity.');
+  impactHTML += coverageBarsHTML(d.impact.coverage, 'Percentage of eligible employees actively using the service at each site.');
+  impactEl.innerHTML = impactHTML;
+  // Render CO2 sparkline
+  if (d.impact.co2.sparkline) {
+    charts['spark-impact-co2'] = renderSparkline('sparkline-impact-co2', d.impact.co2.sparkline, '#ffffff');
+  }
+  charts.impact = barChart('chart-impact', d.impact.chart.labels, d.impact.chart.data, '#7c3aed');
+}
+
+// ─── Navigation ─────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    const target = item.dataset.section;
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + target).classList.add('active');
+  });
+});
+
+// ─── Custom date range picker ───────────────────────────────────
+const filterDate = document.getElementById('filter-date');
+const customFields = document.getElementById('custom-date-fields');
+const dateStart = document.getElementById('filter-date-start');
+const dateEnd = document.getElementById('filter-date-end');
+
+// Set default dates
+const today = new Date();
+const thirtyDaysAgo = new Date(today);
+thirtyDaysAgo.setDate(today.getDate() - 30);
+dateEnd.value = today.toISOString().split('T')[0];
+dateStart.value = thirtyDaysAgo.toISOString().split('T')[0];
+
+filterDate.addEventListener('change', () => {
+  if (filterDate.value === 'custom') {
+    customFields.classList.add('visible');
+  } else {
+    customFields.classList.remove('visible');
+  }
+  render();
+});
+
+dateStart.addEventListener('change', render);
+dateEnd.addEventListener('change', render);
+document.getElementById('filter-site').addEventListener('change', render);
+
+// ─── Export Data ─────────────────────────────────────────────────
+function toggleExportMenu() {
+  document.getElementById('exportMenu').classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.export-wrapper')) {
+    document.getElementById('exportMenu').classList.remove('show');
+  }
+});
+
+function downloadCSV(type) {
+  document.getElementById('exportMenu').classList.remove('show');
+  const content = 'Thank you for checking my work in detail, appreciate it! Hope to see you at the office - Oguzhan Gok';
+  const blob = new Blob([content], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'demo-data.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── Initial render ─────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
