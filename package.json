@@ -1,0 +1,21 @@
+{
+  "name": "og-bbc-daily-case-prototype",
+  "version": "1.0.0",
+  "description": "Analytics Dashboard — Partnerships Team Demo",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'No build step required for static HTML'",
+    "lint": "echo 'No linting configured'"
+  },
+  "keywords": [
+    "analytics",
+    "dashboard",
+    "blablacar"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
