@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Operator Analytics Dashboard — Demo</title>
+<title>Analytics Dashboard — Partnerships Team Demo</title>
+<link rel="icon" type="image/png" href="daily-logo.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -697,8 +698,8 @@
   .sidebar-footer {
     padding: 16px 20px;
     border-top: 1px solid rgba(255,255,255,0.08);
-    font-size: 11px;
-    color: #6b7280;
+    font-size: 13.2px;
+    color: #ffffff;
     line-height: 1.6;
   }
 
@@ -775,11 +776,11 @@
 <!-- Sidebar -->
 <nav class="sidebar">
   <div class="sidebar-brand">
-    <h2>Operator Demo</h2>
+    <h2>Admin Panel Demo</h2>
     <span>Analytics Dashboard</span>
   </div>
   <div class="sidebar-nav">
-    <div class="sidebar-label">Analytics</div>
+    <div class="sidebar-label">Dimensions</div>
     <div class="nav-item active" data-section="adoption">
       <span class="nav-icon">👥</span> Adoption
     </div>
@@ -797,7 +798,7 @@
     </div>
   </div>
   <div class="sidebar-footer">
-    <div>Ticket #173 Draft</div>
+    <div><a href="https://oguzhangok.notion.site/Product-Specs-Example-WLE-Operator-Analytics-Dashboard-32b0718b5ca98087a7b5e791100c9737?source=copy_link" target="_blank" style="color:inherit;text-decoration:underline;">Ticket #173 Draft</a></div>
     <div>v0.1</div>
     <div>Crafted by Oguzhan Gok</div>
   </div>
@@ -807,7 +808,7 @@
 <div class="main">
   <!-- Top bar -->
   <div class="topbar">
-    <h1>Analytics Dashboard</h1>
+    <h1>[CompanyName] Dashboard</h1>
     <div class="topbar-right">
       <div class="export-wrapper">
         <button class="export-btn" onclick="toggleExportMenu()">
@@ -954,7 +955,7 @@ const BASE_DATA = {
   adoption: {
     kpis: [
       { label: 'Registered Users', value: 224, change: 12, changeUnit: '%', up: true, tip: 'Total number of users who have created an account within this operator perimeter.', sparkline: [170, 182, 194, 205, 214, 224] },
-      { label: 'New Registrations (period)', value: 34, change: 8, changeUnit: '%', up: true, tip: 'Users who registered in the selected period.', sparkline: [21, 28, 31, 29, 32, 34] },
+      { label: 'New Registrations', value: 34, change: 8, changeUnit: '%', up: true, tip: 'Users who registered in the selected period.', sparkline: [21, 28, 31, 29, 32, 34] },
       { label: 'Activated Users', value: 152, change: 15, changeUnit: '%', up: true, tip: 'Users who completed at least one ride after registering.', sparkline: [118, 126, 133, 140, 146, 152] },
       { label: 'Monthly Active Users', value: 72, change: 5, changeUnit: '%', up: true, tip: 'Unique users who used the service at least once in the last 30 days.', sparkline: [54, 58, 62, 65, 68, 72] },
       { label: 'Activation Rate', value: 68.0, change: 2, changeUnit: 'pp', up: true, tip: 'Percentage of registered users who completed at least one ride.', isPct: true, ring: true },
